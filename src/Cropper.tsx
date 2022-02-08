@@ -133,7 +133,7 @@ export default function Cropper(props: CropperProps) {
       canvas.toBlob(
         (blob) => {
           if (blob === null) {
-            reject("Canvas is empty");
+            reject("Canvas is empty (image may be too large for this browser)");
             return;
           }
           resolve({ blob: blob, fileName: fileName });
