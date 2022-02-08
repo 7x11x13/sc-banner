@@ -98,6 +98,7 @@ export default function App() {
 
   function goBack() {
     setState(AppState.Waiting);
+    setErrors([]);
   }
 
   function isDarkTheme() {
