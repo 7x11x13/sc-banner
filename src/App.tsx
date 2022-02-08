@@ -24,15 +24,15 @@ export default function App() {
   );
   const [dropzoneProgress, setDropzoneProgress] = useState<number>(0);
 
-  function onFilesUploaded(files: File[]) {
-    function setFileErrors(errors: string[]) {
-      setDropzoneState(DropzoneState.Error);
-      setTimeout(() => {
-        setDropzoneState(DropzoneState.Default);
-      }, 250);
-      setErrors(errors);
-    }
+  function setFileErrors(errors: string[]) {
+    setDropzoneState(DropzoneState.Error);
+    setTimeout(() => {
+      setDropzoneState(DropzoneState.Default);
+    }, 250);
+    setErrors(errors);
+  }
 
+  function onFilesUploaded(files: File[]) {
     if (files.length > 1) {
       setFileErrors(["Please select one file to upload"]);
       return;
@@ -110,7 +110,7 @@ export default function App() {
     [AppState.Waiting]: (
       <Dropzone
         onFilesUploaded={onFilesUploaded}
-        setErrors={setErrors}
+        setErrors={setFileErrors}
         state={dropzoneState}
         progress={dropzoneProgress}
       />

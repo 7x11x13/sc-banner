@@ -30,7 +30,9 @@ export default function Dropzone(props: DropzoneProps) {
       onDragEnd();
       if (acceptedFiles.length >= 1) {
         onFilesUploaded(acceptedFiles);
-      } else if (rejections.length >= 1) {
+      } else if (rejections.length > 1) {
+        setErrors(["Please select one file to upload"]);
+      } else if (rejections.length === 1) {
         const errors: string[] = [];
         for (const fileRejection of rejections) {
           const fileName = fileRejection.file.name;
@@ -45,7 +47,8 @@ export default function Dropzone(props: DropzoneProps) {
   );
 
   const { getRootProps, getInputProps } = useDropzone({
-    onDrop: onDrop
+    onDrop: onDrop,
+    multiple: false
   });
 
   function onDragEnter() {
