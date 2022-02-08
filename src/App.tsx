@@ -141,10 +141,21 @@ export default function App() {
           >
             sc-banner
           </Typography>
-          <a
+          <Box
+            component="a"
             href="https://github.com/7x11x13/sc-banner/tree/main"
             target="_blank"
             rel="noreferrer"
+            sx={(theme) => ({
+              "&:hover": {
+                "& *": {
+                  color: theme.palette.primary.light
+                },
+                "& svg": {
+                  fill: theme.palette.primary.light
+                }
+              }
+            })}
           >
             <Typography
               variant="subtitle1"
@@ -167,7 +178,6 @@ export default function App() {
                 margin="0 0.45em"
                 top="0.3em"
                 sx={(theme) => ({
-                  stroke: theme.palette.primary.main,
                   fill: theme.palette.primary.main,
                   display: "inline-block",
                   position: "relative"
@@ -182,7 +192,7 @@ export default function App() {
               </Box>
               Create a seamless SoundCloud banner
             </Typography>
-          </a>
+          </Box>
         </Grid>
         {component}
         {errors.length > 0 ? (
