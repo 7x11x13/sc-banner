@@ -1,0 +1,37 @@
+svg line {
+  transition: transform 0.6s;
+  -webkit-transition: all 0.6s;
+}
+
+svg rect {
+  transition: transform 1.5s;
+  -webkit-transition: all 1.5s;
+}
+
+.dropzone:hover svg line.top,
+.hover svg line.top {
+  -webkit-transform: translateX(-85%);
+  transform: translateX(-85%);
+}
+
+.dropzone:hover svg line.bottom,
+.hover svg line.bottom {
+  -webkit-transform: translateX(85%);
+  transform: translateX(85%);
+}
+
+.dropzone:hover svg line.left,
+.hover svg line.left {
+  -webkit-transform: translateY(85%);
+  transform: translateY(85%);
+}
+
+.dropzone:hover svg line.right,
+.hover svg line.right {
+  -webkit-transform: translateY(-85%);
+  transform: translateY(-85%);
+}
+
+.dropzone * {
+  pointer-events: none;
+}
