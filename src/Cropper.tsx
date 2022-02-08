@@ -1,7 +1,6 @@
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import { saveAs } from "file-saver";
-import JSZip from "jszip";
 import { useRef, useState } from "react";
 import ReactCrop, { Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -25,7 +24,7 @@ export default function Cropper(props: CropperProps) {
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
     width: 100,
-    aspect: 62 / 13,
+    aspect: MIN_WIDTH_PX / MIN_HEIGHT_PX,
     x: 0,
     y: 0
   } as Crop);
@@ -77,14 +76,10 @@ export default function Cropper(props: CropperProps) {
       ];
       Promise.all(promises)
         .then((blobs) => {
-          const zip = new JSZip();
           for (const { blob, fileName } of blobs) {
-            zip.file(fileName, blob as any);
+            saveAs(blob, fileName);
           }
-          zip.generateAsync({ type: "blob" }).then((content) => {
-            saveAs(content, "sc-banner.zip");
-            setDownloading(false);
-          });
+          setDownloading(false);
         })
         .catch((reason) => {
           setErrors([reason]);
