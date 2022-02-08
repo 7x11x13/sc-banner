@@ -81,8 +81,8 @@ export default function Cropper(props: CropperProps) {
           }
           setDownloading(false);
         })
-        .catch((reason) => {
-          setErrors([reason]);
+        .catch((error: Error) => {
+          setErrors([error.message]);
           setDownloading(false);
         });
     }
@@ -106,7 +106,9 @@ export default function Cropper(props: CropperProps) {
     canvas.height = canvasHeight;
 
     if (ctx === null) {
-      return new Promise<CropResult>((resolve, reject) => reject("Context is null"));
+      return new Promise<CropResult>((resolve, reject) =>
+        reject(new Error("Context is null"))
+      );
     }
 
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
@@ -128,7 +130,9 @@ export default function Cropper(props: CropperProps) {
       canvas.toBlob(
         (blob) => {
           if (blob === null) {
-            reject("Canvas is empty (image may be too large for this browser)");
+            reject(
+              new Error("Canvas is empty (image may be too large for this browser)")
+            );
             return;
           }
           resolve({ blob: blob, fileName: fileName });
