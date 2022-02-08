@@ -8,6 +8,10 @@ svg rect {
   -webkit-transition: all 1.5s;
 }
 
+.dropzone:hover {
+  cursor: pointer;
+}
+
 .dropzone:hover svg line.top,
 .hover svg line.top {
   -webkit-transform: translateX(-85%);
