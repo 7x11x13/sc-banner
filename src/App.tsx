@@ -5,6 +5,7 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { ThemeProvider } from "@mui/system";
 import { useState } from "react";
+import "./App.css";
 import { MIN_HEIGHT_PX, MIN_WIDTH_PX } from "./Constants";
 import Cropper from "./Cropper";
 import Dropzone, { DropzoneState } from "./Dropzone";
@@ -159,30 +160,18 @@ export default function App() {
               }
             })}
           >
-            <Typography
-              variant="subtitle1"
-              fontFamily="Garamond"
-              textAlign="center"
-              sx={(theme) => ({
-                color: theme.palette.primary.main,
-                opacity: "75%",
-                userSelect: "none",
-                verticalAlign: "middle",
-                display: "inline-block"
-              })}
-            >
+            <span className="icon">
               <Box
                 component="svg"
-                maxWidth="1.3em"
-                maxHeight="1.3em"
+                width="1.3em"
+                height="1.3em"
                 viewBox="0 0 1024 1024"
                 strokeWidth="0"
                 margin="0 0.45em"
                 top="0.3em"
                 sx={(theme) => ({
                   fill: theme.palette.primary.main,
-                  display: "inline-block",
-                  position: "relative"
+                  verticalAlign: "middle"
                 })}
               >
                 <path
@@ -192,8 +181,22 @@ export default function App() {
                   transform="scale(64)"
                 />
               </Box>
-              Create a seamless SoundCloud banner
-            </Typography>
+            </span>
+            <span className="icon-text">
+              <Typography
+                variant="h6"
+                fontFamily="Garamond"
+                textAlign="center"
+                sx={(theme) => ({
+                  color: theme.palette.primary.main,
+                  opacity: "75%",
+                  userSelect: "none",
+                  margin: "0"
+                })}
+              >
+                Create a seamless SoundCloud banner
+              </Typography>
+            </span>
           </Box>
         </Grid>
         {component}
