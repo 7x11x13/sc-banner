@@ -19,7 +19,8 @@ interface CropperProps {
 
 export default function Cropper(props: CropperProps) {
   const { img, setErrors, goBack } = props;
-  const [downloading, setDownloading] = useState<boolean>(false);
+  const [downloadingBanner, setDownloadingBanner] = useState<boolean>(false);
+  const [downloadingProfilePic, setDownloadingProfilePic] = useState<boolean>(false);
 
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
@@ -42,50 +43,77 @@ export default function Cropper(props: CropperProps) {
     setCrop(percentageCrop);
   }
 
-  async function downloadBanner() {
-    if (imageRef.current && crop.width && crop.height) {
-      setDownloading(true);
-      const image = imageRef.current;
+  function getCropFactor(image: HTMLImageElement, crop: Crop) {
+    // Return what multiple of MIN_WIDTH_PX x MIN_HEIGHT_PX crop should get scaled to
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
 
-      const pixelRatio = window.devicePixelRatio;
-      const scaleX = image.naturalWidth / image.width;
-      const scaleY = image.naturalHeight / image.height;
+    const width = crop.width * scaleX;
+    const height = crop.height * scaleY;
 
-      const oldWidth = crop.width * pixelRatio * scaleX;
-      const oldHeight = crop.height * pixelRatio * scaleY;
+    const factor = Math.max(
+      Math.ceil(width / MIN_WIDTH_PX),
+      Math.ceil(height / MIN_HEIGHT_PX)
+    );
 
-      const factor = Math.max(
-        Math.ceil(oldWidth / MIN_WIDTH_PX),
-        Math.ceil(oldHeight / MIN_HEIGHT_PX)
-      );
-      const newWidth = factor * MIN_WIDTH_PX;
-      const newHeight = factor * MIN_HEIGHT_PX;
-      const pfpWidth = factor * MIN_PFP_PX;
+    return factor;
+  }
 
-      const margin = (MIN_MARGIN_PX / MIN_HEIGHT_PX) * crop.height;
-      const pfpCrop: Partial<Crop> = {
-        x: crop.x + margin,
-        y: crop.y + margin,
-        width: crop.height - 2 * margin,
-        height: crop.height - 2 * margin
-      };
-
-      const promises = [
-        cropImage(image, crop, newWidth, newHeight, "banner.png"),
-        cropImage(image, pfpCrop as Crop, pfpWidth, pfpWidth, "profile-picture.png")
-      ];
-      Promise.all(promises)
-        .then((blobs) => {
-          for (const { blob, fileName } of blobs) {
-            saveAs(blob, fileName);
-          }
-          setDownloading(false);
-        })
-        .catch((error: Error) => {
-          setErrors([error.message]);
-          setDownloading(false);
-        });
+  async function downloadProfilePic() {
+    if (!(imageRef.current && crop.width && crop.height)) {
+      setErrors(["Invalid image or crop"]);
+      return;
     }
+
+    setDownloadingProfilePic(true);
+
+    const image = imageRef.current;
+
+    const factor = getCropFactor(image, crop);
+    const pfpWidth = factor * MIN_PFP_PX;
+
+    const margin = (MIN_MARGIN_PX / MIN_HEIGHT_PX) * crop.height;
+    const pfpCrop: Partial<Crop> = {
+      x: crop.x + margin,
+      y: crop.y + margin,
+      width: crop.height - 2 * margin,
+      height: crop.height - 2 * margin
+    };
+
+    cropImage(image, pfpCrop as Crop, pfpWidth, pfpWidth, "profile-picture.png")
+      .then(({ blob, fileName }) => {
+        saveAs(blob, fileName);
+        setDownloadingProfilePic(false);
+      })
+      .catch((error: Error) => {
+        setErrors([error.message]);
+        setDownloadingProfilePic(false);
+      });
+  }
+
+  async function downloadBanner() {
+    if (!(imageRef.current && crop.width && crop.height)) {
+      setErrors(["Invalid image or crop"]);
+      return;
+    }
+
+    setDownloadingBanner(true);
+    const image = imageRef.current;
+
+    const factor = getCropFactor(image, crop);
+
+    const newWidth = factor * MIN_WIDTH_PX;
+    const newHeight = factor * MIN_HEIGHT_PX;
+
+    cropImage(image, crop, newWidth, newHeight, "banner.png")
+      .then(({ blob, fileName }) => {
+        saveAs(blob, fileName);
+        setDownloadingBanner(false);
+      })
+      .catch((error: Error) => {
+        setErrors([error.message]);
+        setDownloadingBanner(false);
+      });
   }
 
   async function cropImage(
@@ -118,8 +146,8 @@ export default function Cropper(props: CropperProps) {
       image,
       crop.x * scaleX,
       crop.y * scaleY,
-      crop.width * scaleX,
-      crop.height * scaleY,
+      crop.width * scaleX * pixelRatio,
+      crop.height * scaleY * pixelRatio,
       0,
       0,
       canvas.width,
@@ -167,10 +195,15 @@ export default function Cropper(props: CropperProps) {
       </Grid>
       <Grid item key="buttons">
         <Button onClick={goBack}>BACK</Button>
-        {downloading ? (
+        {downloadingBanner ? (
           <Button disabled>PROCESSING...</Button>
         ) : (
-          <Button onClick={downloadBanner}>DOWNLOAD</Button>
+          <Button onClick={downloadBanner}>DOWNLOAD BANNER</Button>
+        )}
+        {downloadingProfilePic ? (
+          <Button disabled>PROCESSING...</Button>
+        ) : (
+          <Button onClick={downloadProfilePic}>DOWNLOAD PROFILE PICTURE</Button>
         )}
       </Grid>
     </>
