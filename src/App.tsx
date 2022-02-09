@@ -43,11 +43,11 @@ export default function App() {
       const reader = new FileReader();
 
       reader.onabort = () => {
-        reject(`${file.name} - file reading was aborted`);
+        reject(new Error(`${file.name} - file reading was aborted`));
       };
 
       reader.onerror = () => {
-        reject(`${file.name} - file reading failed`);
+        reject(new Error(`${file.name} - file reading failed`));
       };
 
       reader.onloadstart = () => {
@@ -65,18 +65,20 @@ export default function App() {
 
         image.onload = () => {
           if (image.naturalHeight < MIN_HEIGHT_PX || image.naturalWidth < MIN_WIDTH_PX) {
-            reject(`Image must be at least ${MIN_WIDTH_PX} x ${MIN_HEIGHT_PX}`);
+            reject(
+              new Error(`Image must be at least ${MIN_WIDTH_PX} x ${MIN_HEIGHT_PX}`)
+            );
           } else {
             resolve(reader.result as string);
           }
         };
 
         image.onabort = () => {
-          reject(`${file.name} - image reading was aborted`);
+          reject(new Error(`${file.name} - image reading was aborted`));
         };
 
         image.onerror = () => {
-          reject(`${file.name} - invalid image`);
+          reject(new Error(`${file.name} - invalid image`));
         };
 
         image.src = reader.result as string;
@@ -91,8 +93,8 @@ export default function App() {
         setErrors([]);
         setState(AppState.Processing);
       })
-      .catch((err: string) => {
-        setFileErrors([err]);
+      .catch((err: Error) => {
+        setFileErrors([err.message]);
         setDropzoneProgress(0);
       });
   }
