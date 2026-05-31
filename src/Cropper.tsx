@@ -33,6 +33,21 @@ export default function Cropper(props: CropperProps) {
 
   function onImageLoaded(image: HTMLImageElement) {
     imageRef.current = image;
+    // Force the crop to the largest whole multiple of MIN_WIDTH_PX x MIN_HEIGHT_PX so the
+    // banner exports 1:1 with no scaling. Images whose width isn't a multiple of
+    // MIN_WIDTH_PX can't have their whole width selected (the excess is cropped off).
+    const factor = getFactor(image);
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    setCrop({
+      unit: "px",
+      width: (factor * MIN_WIDTH_PX) / scaleX,
+      height: (factor * MIN_HEIGHT_PX) / scaleY,
+      aspect: MIN_WIDTH_PX / MIN_HEIGHT_PX,
+      x: 0,
+      y: 0
+    } as Crop);
+    return false;
   }
 
   function onCropComplete(crop: Crop) {
@@ -43,20 +58,18 @@ export default function Cropper(props: CropperProps) {
     setCrop(percentageCrop);
   }
 
-  function getCropFactor(image: HTMLImageElement, crop: Crop) {
-    // Return what multiple of MIN_WIDTH_PX x MIN_HEIGHT_PX crop should get scaled to
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
-    const width = crop.width * scaleX;
-    const height = crop.height * scaleY;
-
-    const factor = Math.max(
-      Math.ceil(width / MIN_WIDTH_PX),
-      Math.ceil(height / MIN_HEIGHT_PX)
+  function getFactor(image: HTMLImageElement) {
+    // Largest whole multiple of MIN_WIDTH_PX x MIN_HEIGHT_PX that fits in the image. The
+    // banner is exported at exactly this size, sampled 1:1 from the source, so there is no
+    // scaling and no aspect-ratio change. Source widths that aren't a multiple of
+    // MIN_WIDTH_PX lose their rightmost (width % MIN_WIDTH_PX) pixels.
+    return Math.max(
+      1,
+      Math.min(
+        Math.floor(image.naturalWidth / MIN_WIDTH_PX),
+        Math.floor(image.naturalHeight / MIN_HEIGHT_PX)
+      )
     );
-
-    return factor;
   }
 
   async function downloadProfilePic() {
@@ -68,19 +81,27 @@ export default function Cropper(props: CropperProps) {
     setDownloadingProfilePic(true);
 
     const image = imageRef.current;
+    const factor = getFactor(image);
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const bannerX = Math.round(crop.x * scaleX);
+    const bannerY = Math.round(crop.y * scaleY);
 
-    const factor = getCropFactor(image, crop);
-    const pfpWidth = factor * MIN_PFP_PX;
+    // Within each MIN_HEIGHT_PX of banner the avatar is inset MIN_MARGIN_PX and is
+    // MIN_PFP_PX wide (14 : 99 : 14), so every dimension is an exact multiple of factor.
+    const margin = factor * MIN_MARGIN_PX;
+    const diameter = factor * MIN_PFP_PX;
 
-    const margin = (MIN_MARGIN_PX / MIN_HEIGHT_PX) * crop.height;
-    const pfpCrop: Partial<Crop> = {
-      x: crop.x + margin,
-      y: crop.y + margin,
-      width: crop.height - 2 * margin,
-      height: crop.height - 2 * margin
-    };
-
-    cropImage(image, pfpCrop as Crop, pfpWidth, pfpWidth, "profile-picture.png")
+    cropImage(
+      image,
+      bannerX + margin,
+      bannerY + margin,
+      diameter,
+      diameter,
+      diameter,
+      diameter,
+      "profile-picture.png"
+    )
       .then(({ blob, fileName }) => {
         saveAs(blob, fileName);
         setDownloadingProfilePic(false);
@@ -100,12 +121,16 @@ export default function Cropper(props: CropperProps) {
     setDownloadingBanner(true);
     const image = imageRef.current;
 
-    const factor = getCropFactor(image, crop);
+    const factor = getFactor(image);
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const bannerX = Math.round(crop.x * scaleX);
+    const bannerY = Math.round(crop.y * scaleY);
 
-    const newWidth = factor * MIN_WIDTH_PX;
-    const newHeight = factor * MIN_HEIGHT_PX;
+    const width = factor * MIN_WIDTH_PX;
+    const height = factor * MIN_HEIGHT_PX;
 
-    cropImage(image, crop, newWidth, newHeight, "banner.png")
+    cropImage(image, bannerX, bannerY, width, height, width, height, "banner.png")
       .then(({ blob, fileName }) => {
         saveAs(blob, fileName);
         setDownloadingBanner(false);
@@ -118,15 +143,14 @@ export default function Cropper(props: CropperProps) {
 
   async function cropImage(
     image: HTMLImageElement,
-    crop: Crop,
+    sx: number,
+    sy: number,
+    sWidth: number,
+    sHeight: number,
     canvasWidth: number,
     canvasHeight: number,
     fileName: string
   ) {
-    const pixelRatio = window.devicePixelRatio;
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
@@ -139,20 +163,9 @@ export default function Cropper(props: CropperProps) {
       );
     }
 
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.imageSmoothingQuality = "high";
 
-    ctx.drawImage(
-      image,
-      crop.x * scaleX,
-      crop.y * scaleY,
-      crop.width * scaleX * pixelRatio,
-      crop.height * scaleY * pixelRatio,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.drawImage(image, sx, sy, sWidth, sHeight, 0, 0, canvasWidth, canvasHeight);
 
     return new Promise<CropResult>((resolve, reject) => {
       canvas.toBlob(

@@ -1,4 +1,4 @@
-export const MIN_WIDTH_PX = 124;
-export const MIN_HEIGHT_PX = 26;
-export const MIN_PFP_PX = 20;
-export const MIN_MARGIN_PX = 3;
+export const MIN_WIDTH_PX = 604;
+export const MIN_HEIGHT_PX = 127;
+export const MIN_PFP_PX = 99;
+export const MIN_MARGIN_PX = 14;
