@@ -4,7 +4,12 @@ import { saveAs } from "file-saver";
 import { useRef, useState } from "react";
 import ReactCrop, { Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import { MIN_HEIGHT_PX, MIN_MARGIN_PX, MIN_PFP_PX, MIN_WIDTH_PX } from "./Constants";
+import {
+  MIN_HEIGHT_PX,
+  MIN_WIDTH_PX,
+  PFP_DIAMETER_RATIO,
+  PFP_MARGIN_RATIO
+} from "./Constants";
 
 interface CropResult {
   fileName: string;
@@ -87,10 +92,17 @@ export default function Cropper(props: CropperProps) {
     const bannerX = Math.round(crop.x * scaleX);
     const bannerY = Math.round(crop.y * scaleY);
 
-    // Within each MIN_HEIGHT_PX of banner the avatar is inset MIN_MARGIN_PX and is
-    // MIN_PFP_PX wide (14 : 99 : 14), so every dimension is an exact multiple of factor.
-    const margin = factor * MIN_MARGIN_PX;
-    const diameter = factor * MIN_PFP_PX;
+    // Avatar = a centered square inset PFP_MARGIN_RATIO and PFP_DIAMETER_RATIO wide, as
+    // fractions of the banner height (14 : 99 : 14).
+    const bannerHeight = factor * MIN_HEIGHT_PX;
+    const margin = PFP_MARGIN_RATIO * bannerHeight;
+    const diameter = PFP_DIAMETER_RATIO * bannerHeight;
+
+    // SoundCloud re-encodes the avatar down to 200px (and 500px on retina). If our export
+    // size isn't a clean multiple of those, the downscale samples short of the edge and
+    // drops ~2px at the right/bottom, shifting the avatar ~1px off the banner. Emit at a
+    // multiple of 1000 (integer downscale to both 200 and 500) so it stays seamless.
+    const pfpOut = Math.ceil(diameter / 1000) * 1000;
 
     cropImage(
       image,
@@ -98,8 +110,8 @@ export default function Cropper(props: CropperProps) {
       bannerY + margin,
       diameter,
       diameter,
-      diameter,
-      diameter,
+      pfpOut,
+      pfpOut,
       "profile-picture.png"
     )
       .then(({ blob, fileName }) => {

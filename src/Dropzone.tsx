@@ -136,7 +136,7 @@ export default function Dropzone(props: DropzoneProps) {
           fontStyle="italic"
           style={{ userSelect: "none", zIndex: "2", textAlign: "center", lineHeight: 2 }}
         >
-          Recommended size: 6040 x 1270 <br />
+          Recommended size: 6200 x 1300 <br />
           For best results use a multiple of {MIN_WIDTH_PX} x {MIN_HEIGHT_PX}
         </Typography>
         <input {...getInputProps()} />
